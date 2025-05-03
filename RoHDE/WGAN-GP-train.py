@@ -39,9 +39,9 @@ from torchvision.transforms import ToTensor
 # Hyperparameters etc.
 device = "cuda" if torch.cuda.is_available() else "cpu"
 LEARNING_RATE = 1e-4
-BATCH_SIZE = 512
+BATCH_SIZE = 1000
 IMAGE_SIZE1 = 8
-IMAGE_SIZE2 = 24
+IMAGE_SIZE2 = 24  conda create -n RoHDE -f enviroment.yml
 CHANNELS_IMG = 1
 Z_DIM = 100
 NUM_EPOCHS = 100
