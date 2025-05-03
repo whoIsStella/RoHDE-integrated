@@ -22,12 +22,12 @@ from torchvision.transforms import ToTensor
 # Hyperparameters etc.
 device = "cuda" if torch.cuda.is_available() else "cpu"
 LEARNING_RATE = 1e-4
-BATCH_SIZE = 64
+BATCH_SIZE = 512
 IMAGE_SIZE1 = 8
 IMAGE_SIZE2 = 24
 CHANNELS_IMG = 1
 Z_DIM = 100
-NUM_EPOCHS = 3000
+NUM_EPOCHS = 100
 FEATURES_CRITIC = 16
 FEATURES_GEN = 16
 CRITIC_ITERATIONS = 5

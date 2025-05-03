@@ -10,8 +10,7 @@ import torch.nn as nn
 import time
 
 
-
-TESTING_PATH = "data/clean"
+TESTING_PATH = "data/clean/CA"
 GAN_WEIGHT = "weight/Gan/CA"
 #MOBILENET_WEIGHT = "weight/ICELab/Mobilenet/Training_clean_testclean/clean_clean/98.0762"
 IMAGE_SIZE1 = 8
