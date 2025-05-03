@@ -1,6 +1,23 @@
 
 """
 Training of WGAN-GP
+is for unsupervised/synthetic 
+data generation (not classification)
+
+
+    Purpose: Trains a Wasserstein 
+    GAN with Gradient Penalty (WGAN-GP) 
+    to generate synthetic sEMG data.
+    What it does:
+        Loads real sEMG data.
+        Defines and trains a generator 
+        and discriminator.
+        Saves generator weights and logs 
+        training metrics.
+    Use case: Use this script if you 
+    want to generate synthetic sEMG 
+    data for augmentation or analysis.
+
 """
 
 import torch

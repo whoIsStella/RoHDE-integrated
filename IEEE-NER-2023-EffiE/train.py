@@ -4,9 +4,23 @@
             - Data Preprocessing over Ninapro DataBase5
             - Training finetune-base model (Saving weights along the way)
             - Visualize training logs (model accuracy and loss during training)
+    
+    Purpose: Trains a supervised CNN classifier 
+    for gesture recognition using sEMG data 
+    (lower-density, original EffiE model).
+    What it does:
+        Loads and preprocesses sEMG data.
+        Defines and trains a CNN model.
+        Evaluates and saves the model.
+    Use case: Use this script for standard
+    supervised training of the EffiE CNN model.
+
+
             
     Author: Stella Parker @ SF State MIC Lab
     Date: Started: October 2024 -Ongoing
+    
+    supervised classification (gesture recognition)
 """
 import torch
 import numpy as np

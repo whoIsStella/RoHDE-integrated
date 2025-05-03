@@ -1,4 +1,14 @@
+# Purpose: Trains and evaluates a neural network classifier 
+# (e.g., MobileNetV2) for sEMG gesture recognition.
+# What it does:
 
+#     Loads and preprocesses sEMG data.
+#     Defines the classifier model.
+#     Trains the model using labeled data.
+#     Evaluates accuracy on a test set.
+#     Saves the best model weights for later use (e.g., in real-time inference).
+
+# Use case: Use this script to create a trained classifier for gesture recognition
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm

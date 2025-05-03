@@ -33,7 +33,7 @@ from typing import Any
 from bleak import BleakClient, discover
 from dataset import realtime_preprocessing
 from model import get_finetune, realtime_pred
-
+from RoHDE import RoHDE.model
 
 warnings.filterwarnings("ignore")
 # tf.get_logger().setLevel('INFO')
