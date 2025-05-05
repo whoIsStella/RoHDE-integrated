@@ -20,20 +20,12 @@ class dataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        
-
         data = self.data[idx]
         label = self.label[idx].astype(int)
         data = self.NormalizeData(data)
-
-        
-        data = data.reshape(1,self.image_size1,self.image_size2)
-
-        data = data.astype("float32")
+        data = data.reshape(1,self.image_size1,self.image_size2).astype("float32")
         return data,label
 
-        
-    
     def NormalizeData(self,data):
 
         return data
@@ -142,3 +134,55 @@ class dataset(Dataset):
                     data = np.concatenate((data,temp),axis=0)
                     label = np.concatenate((label,np.repeat(gest-1,temp.shape[0])),axis=0)
         return data,label
+    
+    def load_from_mat(self,fileAddress):
+        data = scipy.io.loadmat(fileAddress)['Data']
+    
+    def load_from_numpy(self,root,data,label):
+        total_noise_data = None
+        total_noise_label = None
+        for i in range(1,65):
+            if i == 10:
+                continue
+            noise_data = None
+            noise_label = None
+            for j in range(25):
+                
+                data_path = f"{root}/Channel_{i}/{j}_data.npy"
+                label_path = f"{root}/Channel_{i}/{j}_label.npy"
+                if noise_data is None:
+                    noise_data = np.load(data_path).reshape(-1)
+                    noise_label = np.load(label_path)
+                else:
+                    noise_data = np.concatenate((noise_data,np.load(data_path).reshape(-1)))
+                    noise_label = np.concatenate((noise_label,np.load(label_path)))
+            if total_noise_data is None:
+                total_noise_data = noise_data[np.newaxis,:]
+                total_noise_label = noise_label[np.newaxis,:]
+            else:
+                total_noise_data = np.concatenate((total_noise_data,noise_data[np.newaxis,:]),axis=0)
+                total_noise_label = np.concatenate((total_noise_label,noise_label[np.newaxis,:]),axis=0)
+        original_clean_data = data.copy()
+        original_clean_label = label.copy()
+        final_data = np.hsplit(total_noise_data,total_noise_data.shape[1])
+        for k in range(data.shape[0]):
+            original_clean_data[k][126:136] = final_data[k][0:10].reshape(-1)
+            original_clean_data[k][192-53:] = final_data[k][63-53:].reshape(-1)
+        
+        return original_clean_data,original_clean_label
+    
+    def realtime_preprocessing(self, model, sEMG, num_classes=8, window=24,step=10):
+        sEMG = np.array(sEMG).reshape(1, 1, num_classes, window).astype(np.float32)
+        tensor = torch.from_numpy(sEMG)
+        with torch.no_grad():
+            output = model(tensor)
+            predicted = torch.argmax(output, dim=1).item()
+        return predicted
+
+    def realtime_pred(self, model, sEMG, num_channels=192, window_length=24):
+        sEMG = sEMG.reshape(1, 1, num_channels, window_length).astype(np.float32)
+        tensor = torch.from_numpy(sEMG)
+        with torch.no_grad():
+            output = model(tensor)
+            predicted = torch.argmax(output, dim=1).item()
+        return predicted
