@@ -20,20 +20,20 @@
 ## ##
 
 import asyncio
+import time
+#import serial
 import json
-# import random as rand
 import config
 import nest_asyncio
 nest_asyncio.apply()
-# import tensorflow as tf
 import torch as pytorch
 import numpy as np
 import warnings
 from typing import Any
 from bleak import BleakClient, discover
-from dataset import realtime_preprocessing
-from model import get_finetune, realtime_pred
-from RoHDE import RoHDE.model
+#from dataset import realtime_preprocessing
+from model.mobilenetv2 import MobileNetV2
+
 
 warnings.filterwarnings("ignore")
 # tf.get_logger().setLevel('INFO')
@@ -53,7 +53,7 @@ realtime_batch_size = 2
 realtime_epochs = 15
 
 ## Samples window
-window = 32
+window = 24
 
 ## Step Size
 step_size = 10
@@ -107,7 +107,10 @@ class Connection:
         self.CONTROL = CONTROL
         self.connected = False
         self.connected_device = None
-        self.model = get_finetune(config.save_path, config.prev_params, lr=0.0002, num_classes=len(GESTURES))
+        #self.model = get_finetune(config.save_path, config.prev_params, lr=0.0002, num_classes=len(GESTURES))
+        self.model = MobileNetV2(num_classes=len(GESTURES),input_layer=1)
+        self.model.load_state_dict(pytorch.load(config.save_path)) #TODO config path later
+        self.model.eval()
         self.current_sample = [[] for i in range(num_sensors)]
         
         self.count = 0
@@ -225,15 +228,15 @@ class Connection:
                 ## Optional cast data to float 32
                 sampled_inputs = sampled_inputs.astype(np.float32)
                 
-                ## Train model
-                self.model.fit(
-                    sampled_inputs,
-                    sampled_outputs,
-                    batch_size=realtime_batch_size,
-                    epochs=realtime_epochs
-                )
-                if finetuned_path != None:
-                    self.model.save_weights(finetuned_path)
+                ## Train model            change to pytorch
+                # self.model.fit(
+                #     sampled_inputs,
+                #     sampled_outputs,
+                #     batch_size=realtime_batch_size,
+                #     epochs=realtime_epochs
+                # )
+                # if finetuned_path != None:
+                #     self.model.save_weights(finetuned_path)
                 
                 ## Predict gestures until network is disconnected
                 

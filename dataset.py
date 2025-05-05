@@ -1,7 +1,7 @@
 # """
 #     Description: Utilities for extracting and preprocessing sEMG signals data.
-#     Author: Jimmy L. @ SF State MIC Lab
-#     Date: Summer 2022
+#     Author: Stella Parker @ SF State MIC Lab
+#     Date: 2025 augmented for HD
 # """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -375,7 +375,7 @@ def apply_window(gestures, window=32, step=16):
     return signals, outputs
 
 
-def realtime_preprocessing(emg, params_path=None, num_classes=4, window=32, step=16):
+def realtime_preprocessing(model, sEMG, params_path=None, num_classes=8, window=24, step=16):
     # """
     # Purpose:
     #     Preprocess data samples obtained from realtime.py
@@ -397,7 +397,13 @@ def realtime_preprocessing(emg, params_path=None, num_classes=4, window=32, step
     #     2. outputs (numpy.ndarray):
     #         Labels for the sEMG signals
     # """
-    emg = np.array(emg)
+    sEMG = np.array(sEMG).reshape(1, 1, num_classes, window).astype(np.float32)
+    tensor = torch.from_numpy(sEMG)
+    with torch.no_grad():
+        output = model(tensor)
+        predicted = torch.argmax(output, dim=1).item()
+        print(f"Predicted gesture: {predicted}")
+        return predicted
     
     # Apply Standarization feature scaling to samples if 'params_path'(from args) was provided
     if params_path != None:
