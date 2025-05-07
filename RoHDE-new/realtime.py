@@ -31,7 +31,7 @@ import numpy as np
 import warnings
 from typing import Any
 from bleak import BleakClient, discover
-#from dataset import realtime_preprocessing
+from dataset import realtime_preprocessing
 from model.mobilenetv2 import MobileNetV2
 
 
@@ -70,7 +70,7 @@ GESTURES = [
 delay = 2.0
 
 ## Number of sensors Myo Armband contains
-num_sensors = 8
+num_sensors = 8 #192
 
 ## Path to save finetuned model, set NONE if no export
 ## finetuned_path = None
