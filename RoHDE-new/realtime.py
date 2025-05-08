@@ -31,8 +31,9 @@ import numpy as np
 import warnings
 from typing import Any
 from bleak import BleakClient, discover
-from dataset import realtime_preprocessing
+from dataset import dataset
 from model.mobilenetv2 import MobileNetV2
+import onnxruntime as ort
 
 
 warnings.filterwarnings("ignore")
@@ -108,9 +109,7 @@ class Connection:
         self.connected = False
         self.connected_device = None
         #self.model = get_finetune(config.save_path, config.prev_params, lr=0.0002, num_classes=len(GESTURES))
-        self.model = MobileNetV2(num_classes=len(GESTURES),input_layer=1)
-        self.model.load_state_dict(pytorch.load(config.save_path)) #TODO config path later
-        self.model.eval()
+        self.ort_session = ort.InferenceSession("weight/ICELab/Mobilenet/Training_noise_testnoise/LC_LC/98.6816.onnx")
         self.current_sample = [[] for i in range(num_sensors)]
         
         self.count = 0
