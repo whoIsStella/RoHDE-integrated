@@ -30,7 +30,7 @@ import numpy as np
 import warnings
 from typing import Any
 from bleak import BleakClient, discover
-from dataset import dataset, realtime_preprocessing
+from dataset import dataset
 from model.mobilenetv2 import MobileNetV2
 import onnxruntime as ort
 
@@ -204,37 +204,27 @@ class Connection:
                         sensors[channel_idx] = sensor_samples[:(SAMPLES_PER_GESTURE+initial_length)]
                 
                 ## Get preprocessed data for training
-                inputs, outputs = realtime_preprocessing(sensors, params_path="scaling_params.json",
-                                                         num_classes=len(GESTURES), window=window, step=step_size)
+                # inputs, outputs = realtime_preprocessing(sensors, params_path="scaling_params.json",
+                #                                          num_classes=len(GESTURES), window=window, step=step_size)
                 
-                ## Perform cross-validation sampling ([label 0, label 1, label 2, label 3, label 0, label 1, label 2, label 3, ...])
-                sampled_inputs = []
-                sampled_outputs = []
+                # ## Perform cross-validation sampling ([label 0, label 1, label 2, label 3, label 0, label 1, label 2, label 3, ...])
+                # sampled_inputs = []
+                # sampled_outputs = []
 
-                clusters = len(inputs) // len(GESTURES)
-                for idx in range(clusters):
-                    for labels in range(len(GESTURES)):
-                        sampled_inputs.append(inputs[idx+(labels*clusters)])
-                        sampled_outputs.append(outputs[idx+(labels*clusters)])
+                # clusters = len(inputs) // len(GESTURES)
+                # for idx in range(clusters):
+                #     for labels in range(len(GESTURES)):
+                #         sampled_inputs.append(inputs[idx+(labels*clusters)])
+                #         sampled_outputs.append(outputs[idx+(labels*clusters)])
 
-                sampled_inputs = np.array(sampled_inputs)
-                sampled_outputs = np.array(sampled_outputs)
+                # sampled_inputs = np.array(sampled_inputs)
+                # sampled_outputs = np.array(sampled_outputs)
                 
-                ## Convert data to appropriate sEMG images. (For example: [batch_size, 1, 8(sensors/channels), 52(window size)])
-                sampled_inputs = sampled_inputs.reshape(-1, 8, window, 1)
+                # sampled_inputs = sampled_inputs.reshape(-1, 8, window, 1)
                 
-                ## Optional cast data to float 32
-                sampled_inputs = sampled_inputs.astype(np.float32)
+                # ## Optional cast data to float 32
+                # sampled_inputs = sampled_inputs.astype(np.float32)
                 
-                ## Train model            change to pytorch
-                # self.model.fit(
-                #     sampled_inputs,
-                #     sampled_outputs,
-                #     batch_size=realtime_batch_size,
-                #     epochs=realtime_epochs
-                # )
-                # if finetuned_path != None:
-                #     self.model.save_weights(finetuned_path)
                 
                 ## Predict gestures until network is disconnected
                 
