@@ -3,7 +3,7 @@
 Real-time hand gesture classification using the Myo armband and a MobileNetV2 model trained on high-density EMG (HD-EMG) data. 
 This system allows robust gesture recognition through ONNX inference on tiled Myo data for compatibility with HD-trained models.
 
-**Features:
+**Features:**
 
 Uses the Myo armband for real-time EMG streaming over BLE
 
@@ -13,7 +13,7 @@ Tiling logic matches training-time input dimensionality
 
 ONNX model inference for fast and portable execution
 
-**System Requirements
+**System Requirements**
 
 Python 3.8–3.11 (avoid 3.12 for compatibility)
 
@@ -21,7 +21,7 @@ Myo Armband with BLE support
 
 Windows Bluetooth enabled
 
-**Dependencies
+**Dependencies**
 
 ```
 pip install bleak==0.20.2 onnxruntime numpy torch
@@ -29,7 +29,7 @@ pip install bleak==0.20.2 onnxruntime numpy torch
 
 On Windows, run this from Command Prompt or PowerShell — not WSL or Docker!
 
-**Project Structure
+**Project Structure**
 
 RoHDE-new/
 ├── realtime.py             # Real-time Bluetooth data stream + ONNX inference
@@ -49,7 +49,7 @@ RoHDE-new/
 
 
 
-**Export your trained model to ONNXRun:
+**Export your trained model to ONNXRun:**
 
 ```
 python export_onnx.py
@@ -63,16 +63,11 @@ python realtime.py
 
 Perform gesturesThe system will instruct you to perform Rest, Fist, Thumbs Up, and Ok Sign. After recording, real-time predictions will stream via console output.
 
-**Training Compatibility
+**Training Compatibility**
 
 Trained on HD-EMG (192 channels, 24 time steps)
 
 Myo provides 8-channel data which is tiled to match the model’s expected 192-channel input
 
-
-
-
-
-MIT License. See LICENSE for more details.
 
 
