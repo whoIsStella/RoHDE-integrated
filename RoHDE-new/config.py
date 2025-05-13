@@ -2,6 +2,7 @@
     Description: Configuration Variables and Parameters
     Author: Stella Parker @ SF State MIC Lab
     Date: Started: October 2024 -Ongoing
+    possibly redundant
 """
 # How many samples each sEMG image channel contains.
 window = 32 #32
@@ -21,8 +22,8 @@ pool_size =  (1, 2) #(1, 1) (3, 1)
 # Exercises with dedicated gestures stored
 exercises = ["E2"]
 
-# Path of Ninapro DataBase 5 sEMG dataset.
-folder_path = "Ninapro_DB5"
+hd_folder_path = "data/clean/CA"
+dataset_mode = "hd"
 
 # Ninapro DB5 data collected via 2 Myo armband, controls which armband's 8 sensors to collect
 myo_pref = "elbow"
@@ -55,13 +56,13 @@ dropout = 0.5
 patience = 50
 
 # Initial learning rate for training finetune-base model.
-inital_lr = 0.2
+inital_lr = 3e-4
 
 # Number of training epochs for the finetune-base model.
-epochs = 200
+epochs = 100
 
 # Batch size for training the finetune-base model.
-batch_size = 384
+batch_size = 512
 
 # Paths for saving logs generated when training finetune-base model.
 acc_log = 'visuals/acc_log.jpg'
@@ -73,6 +74,9 @@ prev_params = [num_classes, filters, neurons, dropout, kernel_size, input_shape,
 # Path of json with MEAN and Standard Deviation for each sensor Channel.
 std_mean_path = "scaling_params.json"
 
-tflite_path = 'tensorflow_lite/model.tflite'
+# Whether to use pretrained model weights
+use_pretrained = True
+pretrained_weight_path = "weight/ICELab/Mobilenet/Training_noise_testnoise/LC_LC/98.6816"
 
-tflite_c_path = "tensorflow_lite/model.h"
+# ONNX model export path
+onnx_path = "weight/ICELab/Mobilenet/Training_noise_testnoise/LC_LC/98.6816.onnx"

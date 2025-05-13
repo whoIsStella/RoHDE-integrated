@@ -1,3 +1,8 @@
+"""
+    Description: Dataset class for sEMG data
+    Author: Stella Parker @ SF State MIC Lab
+    Date: 2025
+"""
 from torch.utils.data import Dataset
 import numpy as np
 from matplotlib import pyplot as plt
@@ -21,9 +26,10 @@ class dataset(Dataset):
 
     def __getitem__(self, idx):
         data = self.data[idx]
+        data = np.tile(data, (192 // 8, 1)) #(192, 24)
         label = self.label[idx].astype(int)
         data = self.NormalizeData(data)
-        data = data.reshape(1,self.image_size1,self.image_size2).astype("float32")
+        data = data.reshape(1, 192, 24).astype("float32")
         return data,label
 
     def NormalizeData(self,data):
