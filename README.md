@@ -32,24 +32,38 @@ On Windows, run this from Command Prompt or PowerShell — not WSL or Docker!
 **Project Structure**
 
 RoHDE-new/
+
 ├── realtime.py             # Real-time Bluetooth data stream + ONNX inference
+
 ├── model/
+
 │   └── mobilenetv2.py      # MobileNetV2 architecture
+
 ├── dataset.py              # Training and export utilities
+
 ├── export_onnx.py          # Converts trained PyTorch model to ONNX
+
 ├── weight/
+
 │   └── ...                 # Trained weights and ONNX models
+
 ├── scaling_params.json     # Mean/STD values for real-time standardization
+
 ├── WGAN-GP-train.py
+
 ├── EMG-Classifier.py
+
 ├── RoHDE.py
+
 ├── enviournment.yml
+
 ├── data/
+
 │   └── ...
 
 
 
-**Export your trained model to ONNXRun:**
+**Export trained model to ONNXRun:**
 
 ```
 python export_onnx.py
