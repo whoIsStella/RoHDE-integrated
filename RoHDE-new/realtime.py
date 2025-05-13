@@ -21,22 +21,26 @@
 
 import asyncio
 import time
-#import serial
 import json
 import nest_asyncio
 nest_asyncio.apply()
 import torch as pytorch
 import numpy as np
 import warnings
+import platform
 from typing import Any
-from bleak import BleakClient, discover
+from bleak import BleakClient, discover, BleakScanner
 from dataset import dataset
 from model.mobilenetv2 import MobileNetV2
 import onnxruntime as ort
 
 
 warnings.filterwarnings("ignore")
-# tf.get_logger().setLevel('INFO')
+
+#new lines 41-44 this can go if it doesn't work
+if platform.system() == "Windows":
+    from bleak import _logger as logger
+    logger.setLevel("DEBUG")
 
 ## UUID's for BLE Connection
 
@@ -250,7 +254,9 @@ class Connection:
         print("Bluetooh LE hardware warming up...")
         await asyncio.sleep(2.0) #, loop=loop
         ##Searches for BLE devices
-        devices = await discover()
+        # devices = await discover()
+        devices = await BleakScanner.discover()
+       
        
         response = None
         for i, device in enumerate(devices):
