@@ -23,7 +23,6 @@ import asyncio
 import time
 #import serial
 import json
-import config
 import nest_asyncio
 nest_asyncio.apply()
 import torch as pytorch
@@ -31,7 +30,7 @@ import numpy as np
 import warnings
 from typing import Any
 from bleak import BleakClient, discover
-from dataset import dataset
+from dataset import dataset, realtime_preprocessing
 from model.mobilenetv2 import MobileNetV2
 import onnxruntime as ort
 
@@ -84,7 +83,7 @@ sensors = [[] for i in range(num_sensors)]
 selected_device = []
 
 ## Load MEAN and Standard Deviation for Standarization from Ninapro DB5 sEMG signals.
-with open(config.std_mean_path, 'r') as f:
+with open("scaling_params.json", 'r') as f:
     params = json.load(f)
 
     
@@ -205,7 +204,7 @@ class Connection:
                         sensors[channel_idx] = sensor_samples[:(SAMPLES_PER_GESTURE+initial_length)]
                 
                 ## Get preprocessed data for training
-                inputs, outputs = realtime_preprocessing(sensors, params_path=config.std_mean_path,
+                inputs, outputs = realtime_preprocessing(sensors, params_path="scaling_params.json",
                                                          num_classes=len(GESTURES), window=window, step=step_size)
                 
                 ## Perform cross-validation sampling ([label 0, label 1, label 2, label 3, label 0, label 1, label 2, label 3, ...])
@@ -297,7 +296,7 @@ class Connection:
         if len(self.current_sample[0]) >= window:
             ## Truncate self.current_samples to window size
             sEMG = np.array([samples[-window:] for samples in self.current_sample])
-            
+            sEMG = sEMG.astype(np.float32)
             ## Apply Standarization to sEMG data
             for channel_idx in range(len(sEMG)):
                 mean = params[str(channel_idx)][0]
@@ -307,13 +306,12 @@ class Connection:
             ## Optional cast input to float 32 (demand of microcontroller)
             sEMG = sEMG.astype(np.float32)
             
-            ## Get prediction results
-            pred = realtime_pred(
-                self.model,
-                sEMG,
-                num_channels=num_sensors,
-                window_length=window
-            )
+            ## Get prediction results 
+            ## Convert sEMG data to appropriate input shape for model
+            sEMG = np.tile(sEMG, (192 // 8, 1)) # sEMG shape: (8, 24) → (192, 24)
+            input_data = sEMG[np.newaxis, np.newaxis, :, :]
+            pred_out = self.ort_session.run(None, {"input": input_data})
+            pred = np.argmax(pred_out[0])
             
             
             ## Update prediction results
