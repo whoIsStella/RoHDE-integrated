@@ -1,4 +1,4 @@
-***RoHDE Real-Time EMG Classification***
+#***RoHDE Real-Time EMG Classification***
 
 Real-time hand gesture classification using the Myo armband and a MobileNetV2 model trained on high-density EMG (HD-EMG) data. 
 This system allows robust gesture recognition through ONNX inference on tiled Myo data for compatibility with HD-trained models.
