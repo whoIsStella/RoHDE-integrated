@@ -5,10 +5,10 @@
     possibly redundant
 """
 # How many samples each sEMG image channel contains.
-window = 32 #32
+window = 24 #32
 
 # Sliding step (for overlapping)
-step = 16
+step = 10
 
 # Kernel size for CNN
 kernel_size = (3, 3) #(5, 3) #(3, 3 )
@@ -28,6 +28,12 @@ dataset_mode = "hd"
 # Ninapro DB5 data collected via 2 Myo armband, controls which armband's 8 sensors to collect
 myo_pref = "elbow"
 
+
+# Explicit gesture definitions (aligned with targets)
+gesture_names = [
+    "Rest", "Fist", "Thumbs Up", "Ok Sign", "Open Hand",
+    "Wave In", "Wave Out"
+]
 # Class of gestures for training finetune-base model. Value indexes are based on "visuals/gestures.png"
 targets = [0, 13, 15, 17, 18, 25, 26]
 """
