@@ -57,5 +57,5 @@ zipp==3.8.1
 torch==2.0.1
 torchvision==0.15.2
 torchaudio==2.0.2
-onnx==1.14.0
+onnx==1.21.0
 onnxruntime==1.15.1
