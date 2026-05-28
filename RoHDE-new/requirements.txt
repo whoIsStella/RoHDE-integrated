@@ -54,7 +54,7 @@ wrapt==1.14.1
 zipp==3.8.1
 
 # Added for ONNX and PyTorch
-torch==2.0.1
+torch==2.8.0
 torchvision==0.15.2
 torchaudio==2.0.2
 onnx==1.21.0
