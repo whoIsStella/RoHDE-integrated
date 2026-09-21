@@ -1,46 +1,73 @@
-"""
-    Description: Compression of the model to ONNX format
-    Author: Stella Parker
-    Date: 2025
-"""
+from __future__ import annotations
+
+from pathlib import Path
+
 import torch
-from model.mobilenetv2 import MobileNetV2
-import os
 
-num_classes = 8
-input_layer = 1
-height = 192
-width = 24
-model_path = "weight/ICELab/Mobilenet/Training_noise_testnoise/LC_LC/98.6816"
-onnx_path = "weight/ICELab/Mobilenet/Training_noise_testnoise/LC_LC/98.6816.onnx"
-
-# Make sure output directory exists
-os.makedirs(os.path.dirname(onnx_path), exist_ok=True)
-
-# Load model
-model = MobileNetV2(num_classes=num_classes, input_layer=input_layer)
-state_dict = torch.load(model_path, map_location=torch.device('cpu'))
-state_dict.pop('linear.weight', None)
-state_dict.pop('linear.bias', None)
-model.load_state_dict(state_dict, strict=False)
-
-# Adjust linear layer to match 192x24 input
-with torch.no_grad():
-    dummy_input = torch.randn(1, input_layer, height, width)
-    features = model.bn2(model.conv2(model.layers(model.bn1(model.conv1(dummy_input)))))
-    flatten_size = features.view(1, -1).size(1)
-    model.linear = torch.nn.Linear(flatten_size, num_classes)
-
-# Export ONNX
-model.eval()
-torch.onnx.export(model, dummy_input, onnx_path,
-                  input_names=['input'], output_names=['output'],
-                  dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}},
-                  opset_version=11)
-
-print("✅ Export complete. File saved?", os.path.exists(onnx_path), "\n→", onnx_path)
+from .config import CHECKPOINT_PATH, MODEL_INPUT_SHAPE, ONNX_PATH
+from .model.mobilenetv2 import MobileNetV2
 
 
+def _load_state_dict(path: Path) -> dict[str, torch.Tensor]:
+    try:
+        loaded = torch.load(path, map_location="cpu", weights_only=True)
+    except TypeError:
+        loaded = torch.load(path, map_location="cpu")
+
+    if isinstance(loaded, dict) and "state_dict" in loaded:
+        loaded = loaded["state_dict"]
+
+    if not isinstance(loaded, dict):
+        raise TypeError("checkpoint did not contain a state dict")
+
+    cleaned = {}
+    for key, value in loaded.items():
+        cleaned[key.removeprefix("module.")] = value
+    return cleaned
 
 
+def export() -> Path:
+    if not CHECKPOINT_PATH.exists():
+        raise FileNotFoundError(f"checkpoint not found: {CHECKPOINT_PATH}")
 
+    state = _load_state_dict(CHECKPOINT_PATH)
+    linear_weight = state.get("linear.weight")
+    if linear_weight is None or linear_weight.ndim != 2:
+        raise RuntimeError("checkpoint is missing a valid linear.weight tensor")
+
+    num_classes, checkpoint_features = linear_weight.shape
+    model = MobileNetV2(
+        num_classes=int(num_classes),
+        input_layer=1,
+        input_shape=MODEL_INPUT_SHAPE,
+    )
+
+    if model.linear.in_features != int(checkpoint_features):
+        raise RuntimeError(
+            "checkpoint classifier does not match the configured input shape: "
+            f"checkpoint expects {checkpoint_features} features, "
+            f"model produces {model.linear.in_features}"
+        )
+
+    model.load_state_dict(state, strict=True)
+    model.eval()
+
+    ONNX_PATH.parent.mkdir(parents=True, exist_ok=True)
+    dummy = torch.zeros(1, 1, *MODEL_INPUT_SHAPE, dtype=torch.float32)
+
+    torch.onnx.export(
+        model,
+        dummy,
+        ONNX_PATH,
+        input_names=["input"],
+        output_names=["logits"],
+        dynamic_axes={"input": {0: "batch"}, "logits": {0: "batch"}},
+        opset_version=17,
+    )
+
+    return ONNX_PATH
+
+
+if __name__ == "__main__":
+    path = export()
+    print(f"Exported {path}")
