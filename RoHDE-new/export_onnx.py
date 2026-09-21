@@ -1,6 +1,6 @@
 """
     Description: Compression of the model to ONNX format
-    Author: Stella Parker @ SF State MIC Lab
+    Author: Stella Parker
     Date: 2025
 """
 import torch

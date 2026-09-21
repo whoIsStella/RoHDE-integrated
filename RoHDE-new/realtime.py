@@ -1,6 +1,6 @@
 ## ##
 ## @original author: Amir Modan
-## @editor: Jimmy L. @ SF State MIC Lab
+## @editor: Jimmy L.
 ##  - Date: Summer 2022
 
 ## Main Program for Real-Time system which establishes BLE connection,
