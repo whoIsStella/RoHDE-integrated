@@ -22,7 +22,4 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Check repository hygiene
         run: |
-          test ! -d IEEE-NER-2023-EffiE
-          test ! -d runtime/__pycache__
-          test ! -d runtime/data
-          test ! -d runtime/Experiment_data
+          ! git ls-files | grep -E '(^IEEE-NER-2023-EffiE/|__pycache__/|^runtime/data/|^runtime/Experiment_data/)'
