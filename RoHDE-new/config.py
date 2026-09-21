@@ -1,8 +1,7 @@
 """
     Description: Configuration Variables and Parameters
-    Author: Stella Parker @ SF State MIC Lab
+    Author: Stella Parker
     Date: Started: October 2024 -Ongoing
-    possibly redundant
 """
 # How many samples each sEMG image channel contains.
 window = 24 #32
