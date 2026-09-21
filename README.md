@@ -1,129 +1,141 @@
-# RoHDE Real-Time EMG Classification
+# RoHDE Real-Time EMG
 
-RoHDE-integrated is a real-time EMG inference prototype that connects a Myo armband over BLE to an ONNX model derived from the RoHDE robustness work.
+Real-time EMG inference from a Myo armband using a robustness-trained MobileNetV2 checkpoint and ONNX Runtime.
 
-The project bridges two earlier code paths:
+This repository owns the deployment integration. It is no longer a copy of the earlier research trees or a storage location for raw datasets and intermediate checkpoints.
 
-- **RoHDE** focused on robust high-density EMG classification, including disturbance-aware training and WGAN-GP generated samples.
-- **EffiE** provided the real-time Myo acquisition path: BLE streaming, short EMG windows, preprocessing, and live gesture-recognition workflow.
-- **RoHDE-integrated** combines those ideas into one runtime: live Myo input, preprocessing, shape adaptation for the HD-EMG model, ONNX Runtime inference, and rolling prediction smoothing.
+## Lineage
+
+Two earlier code paths feed into this project:
+
+- [RoHDE](https://github.com/whoIsStella/IEEE-NER-2023-RoHDE) contains the robustness work around disturbed high-density EMG, including WGAN-GP augmentation and classifier experiments.
+- [EffiE](https://github.com/whoIsStella/IEEE-NER-2023-EffiE) contains the earlier real-time Myo acquisition path and BLE-based gesture-recognition workflow.
+- **RoHDE-integrated** owns the live deployment path: Myo BLE input, preprocessing, checkpoint-preserving ONNX export, inference, and prediction smoothing.
+
+The earlier repositories remain the source for training and research history. Their code and datasets are not duplicated here.
 
 ## Runtime pipeline
 
 ```text
 Myo armband
     |
-    | BLE via Bleak
+    | BLE
     v
-8-channel sEMG stream
+two 8-channel EMG samples per notification
     |
-    | signed conversion + 24-sample window
+    v
+24-sample rolling window
+    |
     v
 per-channel normalization
     |
-    | compatibility adapter
     v
-192 x 24 model input
+[1, 1, 8, 24] tensor
     |
     v
 ONNX Runtime
     |
     v
-gesture prediction
+class prediction
     |
     v
-5-sample majority vote
+5-prediction majority vote
 ```
 
-## What the live path does
+## Model contract
 
-`RoHDE-new/realtime.py` handles the current inference path.
+The selected checkpoint is stored at:
 
-1. Scans for a Myo armband and connects over BLE.
-2. Reads the four EMG characteristics exposed by the device.
-3. Converts the incoming bytes to signed EMG values.
-4. Builds an 8-channel window of 24 samples.
-5. Normalizes each channel using `scaling_params.json`.
-6. Repeats the 8-channel window across the channel axis to produce a `192 x 24` tensor.
-7. Adds batch and input-channel dimensions to produce `[1, 1, 192, 24]`.
-8. Runs the tensor through ONNX Runtime.
-9. Smooths predictions with a rolling five-prediction majority vote.
+```text
+models/rohde-lc.pt
+```
 
-## Why the 8-to-192 channel adapter exists
+The current deployment contract is an **8 x 24** EMG window.
 
-The robustness model was built around 192-channel HD-EMG input, while the Myo armband exposes 8 EMG channels.
+A previous integration attempt tiled 8 Myo channels to 192 channels and rebuilt the final classifier layer during ONNX export. That made the tensor shape fit but did not preserve the trained classifier head. The current export path removes that behavior.
 
-The live runtime uses `np.tile` to repeat the 8-channel Myo window until it matches the model's 192-channel input shape. This is a shape-compatibility adapter for deployment experiments. It does **not** make 8-channel Myo sensing equivalent to a true 192-channel HD-EMG array, and it does not recreate the missing spatial information.
+`runtime/export_onnx.py` now:
 
-That distinction matters: this repository explores whether a model built for the HD-EMG pipeline can be exercised against a much smaller live sensor interface without rewriting the entire inference stack.
+1. reads the classifier dimensions directly from the checkpoint;
+2. builds the model at the native 8 x 24 input shape;
+3. checks that the feature count matches the saved classifier weights;
+4. loads the checkpoint with `strict=True`;
+5. exports only if the trained head can be preserved.
 
-## Relationship to the earlier code
+If the checkpoint and runtime shape do not agree, export fails instead of silently creating a new head.
 
-### RoHDE
+## Class labels
 
-The RoHDE code path contains the robustness experiments: HD-EMG classifiers, disturbance conditions such as contact artifacts and loose contacts, and WGAN-GP tooling for generating synthetic disturbed EMG samples.
+The selected robustness checkpoint exposes class outputs, but the repository does not currently contain a validated mapping from those output indexes to the live gesture-name list used by the earlier Myo workflow.
 
-`RoHDE-new/EMG-Classifier.py`, `RoHDE-new/RoHDE.py`, and `RoHDE-new/WGAN-GP-train.py` preserve that side of the project.
+The runtime therefore prints `class_0`, `class_1`, and so on instead of assigning an unverified gesture name.
 
-### EffiE
+That mapping should be added only after it can be traced back to the training labels for this checkpoint.
 
-The EffiE code path contains the real-time Myo workflow and the earlier 8-channel sEMG acquisition approach. A copy is retained under `IEEE-NER-2023-EffiE/` as reference material for the live acquisition lineage.
+## Setup
 
-### Integration layer
-
-The integration work lives primarily under `RoHDE-new/`:
-
-- `realtime.py`: BLE acquisition, preprocessing, ONNX inference, and prediction smoothing
-- `export_onnx.py`: PyTorch-to-ONNX export path
-- `model/mobilenetv2.py`: MobileNetV2 classifier architecture
-- `dataset.py`: HD-EMG loading and input-shape adaptation utilities
-- `scaling_params.json`: per-channel normalization values for the live Myo input
-- `weight/`: trained and exported model artifacts
-
-## Running the live prototype
-
-Requirements:
-
-- Python 3.8 to 3.11
-- Myo armband
-- host Bluetooth LE access
-- `bleak==0.20.2`
-- `onnxruntime`
-- `numpy`
-- `torch`
-
-Install the core dependencies:
+Python 3.10 or 3.11 is recommended.
 
 ```bash
-pip install bleak==0.20.2 onnxruntime numpy torch
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r runtime/requirements.txt
 ```
 
-Then run from `RoHDE-new/`:
+Export the selected checkpoint to ONNX:
 
 ```bash
-python realtime.py
+python -m runtime.export_onnx
 ```
 
-Direct BLE access is required. WSL and containerized environments may not expose the host Bluetooth stack cleanly.
-
-## Exporting a model to ONNX
+Then connect a Myo armband and run:
 
 ```bash
-cd RoHDE-new
-python export_onnx.py
+python -m runtime.realtime
 ```
 
-The export target is a `[batch, 1, 192, 24]` input tensor.
+The runtime needs direct access to the host Bluetooth LE stack.
 
-## Current integration debt
+## Repository layout
 
-Two model-contract issues still need cleanup before this should be treated as a finished deployment path:
+```text
+runtime/
+  config.py            paths and runtime shape constants
+  preprocessing.py     packet decoding, normalization, input preparation
+  realtime.py          BLE acquisition and ONNX inference
+  export_onnx.py       checkpoint-preserving ONNX export
+  model/               MobileNetV2 implementation
+  scaling_params.json  per-channel normalization values
 
-1. The robustness classifier/export path is configured for 8 output classes, while the current live gesture-name list contains 7 labels. The runtime detects an unmapped output instead of silently assigning the wrong gesture, but the class mapping needs to be reconciled.
-2. The current ONNX export script rebuilds the final linear layer to fit the `192 x 24` feature shape. That changes the classifier head rather than preserving the trained head, so new exports need to be revalidated against the intended checkpoint before they are treated as equivalent to the trained model.
+models/
+  rohde-lc.pt          selected checkpoint
 
-These are integration issues, not hidden assumptions. The BLE acquisition, preprocessing path, channel-shape adapter, ONNX runtime wiring, and prediction smoothing are all explicit in the repository.
+tests/
+  hardware-independent preprocessing tests
+
+docs/
+  model-contract.md    deployment assumptions and unresolved label mapping
+```
+
+Raw EMG datasets, generated logs, caches, editor state, duplicated research trees, and intermediate checkpoints are intentionally not kept in the current repository tree.
+
+## Verification
+
+The CI surface is intentionally hardware-independent:
+
+- Python syntax/compile checks
+- preprocessing unit tests
+- repository hygiene checks
+
+BLE connectivity and live Myo behavior require physical hardware and are not claimed as CI-verified.
 
 ## Status
 
-This repository is an integration prototype for real-time EMG inference. The next cleanup pass should reconcile the class mapping and make the ONNX export preserve a validated trained classifier head.
+The repository now has a coherent runtime boundary and a reproducible export contract.
+
+Remaining work:
+
+- validate the checkpoint's class-index-to-gesture mapping;
+- run the cleaned export against the selected checkpoint and record the ONNX model metadata;
+- perform a hardware smoke test with a Myo armband;
+- add latency measurements once the live path is revalidated.
