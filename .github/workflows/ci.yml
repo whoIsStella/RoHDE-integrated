@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependency
+        run: python -m pip install 'numpy>=1.26,<3'
+      - name: Compile
+        run: python -m compileall runtime tests
+      - name: Test preprocessing
+        run: python -m unittest discover -s tests -v
+      - name: Check repository hygiene
+        run: |
+          test ! -d IEEE-NER-2023-EffiE
+          test ! -d runtime/__pycache__
+          test ! -d runtime/data
+          test ! -d runtime/Experiment_data
